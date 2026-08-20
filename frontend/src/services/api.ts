@@ -35,15 +35,33 @@ class ApiService {
       config.body = data;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    const result = await response.json();
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+      const contentType = response.headers.get('content-type') || '';
 
-    if (!response.ok) {
-      const errorMsg = result.message || 'API request failed';
-      throw new Error(errorMsg);
+      let result: any;
+      if (contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+        if (!response.ok) {
+          throw new Error(
+            `Server error (${response.status}): Backend API not responding with JSON. If deployed on Netlify, please verify Netlify Functions or backend URL.`
+          );
+        }
+        result = { success: true, data: text };
+      }
+
+      if (!response.ok) {
+        const errorMsg = result.message || `API request failed with status ${response.status}`;
+        throw new Error(errorMsg);
+      }
+
+      return result;
+    } catch (err: any) {
+      // Re-throw with clean user-facing error message
+      throw new Error(err.message || 'Network request failed. Please check your connection.');
     }
-
-    return result;
   }
 
   get<T = any>(endpoint: string, options?: RequestOptions): Promise<T> {

@@ -1,4 +1,4 @@
-import express, { Application, Request, Response, NextFunction } from 'express';
+import express, { Application, Request, Response, NextFunction, Router } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -30,7 +30,7 @@ export const createApp = (): Application => {
   // CORS configuration
   app.use(
     cors({
-      origin: '*', // Allow web app, Android WebView, and local dev
+      origin: '*', // Allow web app, Android WebView, and Netlify hosting
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
     })
@@ -64,12 +64,15 @@ export const createApp = (): Application => {
   // Rate limiter for authentication attempts
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 200,
     message: { success: false, message: 'Too many requests, please try again later.' },
   });
 
+  // API Master Router
+  const apiRouter = Router();
+
   // Health check endpoint
-  app.get('/api/health', (_req: Request, res: Response) => {
+  apiRouter.get('/health', (_req: Request, res: Response) => {
     res.json({
       status: 'ok',
       service: 'Digital Museum Guide Platform API',
@@ -78,15 +81,19 @@ export const createApp = (): Application => {
     });
   });
 
-  // API Routes
-  app.use('/api/auth', authLimiter, authRoutes);
-  app.use('/api/museums', museumRoutes);
-  app.use('/api/sections', sectionRoutes);
-  app.use('/api/artifacts', artifactRoutes);
-  app.use('/api/qr', qrRoutes);
-  app.use('/api/media', mediaRoutes);
-  app.use('/api/analytics', analyticsRoutes);
-  app.use('/api/public', publicRoutes);
+  // Mount Feature Routes on apiRouter
+  apiRouter.use('/auth', authLimiter, authRoutes);
+  apiRouter.use('/museums', museumRoutes);
+  apiRouter.use('/sections', sectionRoutes);
+  apiRouter.use('/artifacts', artifactRoutes);
+  apiRouter.use('/qr', qrRoutes);
+  apiRouter.use('/media', mediaRoutes);
+  apiRouter.use('/analytics', analyticsRoutes);
+  apiRouter.use('/public', publicRoutes);
+
+  // Mount API router across multiple standard prefixes for Netlify Serverless Functions & Express
+  app.use('/.netlify/functions/api', apiRouter);
+  app.use('/api', apiRouter);
 
   // 404 Route handler
   app.use((_req: Request, res: Response) => {

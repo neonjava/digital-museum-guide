@@ -1,13 +1,21 @@
-# Netlify Configuration for Digital Museum Guide Platform
-
 [build]
-  base = "frontend"
-  publish = "dist"
   command = "npm run build"
+  publish = "frontend/dist"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
+  MONGODB_URI = "mongodb+srv://autosphere:neonjavadev13234@autosphere.nqica9s.mongodb.net/museum_guide?retryWrites=true&w=majority"
+  JWT_SECRET = "REDACTED_JWT_SECRET"
+  STORAGE_PROVIDER = "local"
 
+# Route all /api/* requests directly to the Netlify Serverless Function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# Route all frontend SPA pages to index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
