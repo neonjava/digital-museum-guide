@@ -4,11 +4,13 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  VITE_API_URL = "/api"
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  to = "http://api.example.invalid:5050/api/:splat"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/*"

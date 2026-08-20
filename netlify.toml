@@ -4,18 +4,16 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  VITE_API_URL = "/api"
 
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-
-# Proxy /api requests to Netlify Serverless Functions (connected to MongoDB Atlas)
+# Reverse proxy all /api calls directly to 24/7 dedicated VPS backend
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  to = "http://api.example.invalid:5050/api/:splat"
   status = 200
+  force = true
 
-# Route all frontend SPA routes to index.html
+# SPA client side routing
 [[redirects]]
   from = "/*"
   to = "/index.html"

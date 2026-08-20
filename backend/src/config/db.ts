@@ -12,14 +12,9 @@ export const connectDB = async (): Promise<void> => {
     let uri = env.MONGODB_URI;
 
     if (!uri) {
-      console.log('ℹ️ No MONGODB_URI found in environment. Initializing local embedded MongoDB (7.0.12)...');
+      console.log('ℹ️ No MONGODB_URI found in environment. Initializing local embedded MongoDB...');
       const { MongoMemoryServer } = await import('mongodb-memory-server');
-      memoryServerInstance = await MongoMemoryServer.create({
-        binary: {
-          version: '7.0.12',
-          os: { os: 'linux', dist: 'ubuntu2204', release: '22.04' },
-        },
-      });
+      memoryServerInstance = await MongoMemoryServer.create();
       uri = memoryServerInstance.getUri();
       console.log(`✅ Embedded MongoDB initialized at ${uri}`);
     }

@@ -1,4 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+import { isNativeApp } from '../utils/platform';
+
+const API_BASE_URL = isNativeApp()
+  ? 'http://api.example.invalid:5050/api'
+  : (import.meta.env.VITE_API_URL || '/api');
 
 interface RequestOptions extends RequestInit {
   data?: any;
