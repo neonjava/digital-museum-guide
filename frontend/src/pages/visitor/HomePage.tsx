@@ -11,7 +11,11 @@ import {
   Clock,
   MapPin,
   ChevronRight,
-  BookOpen,
+  Smartphone,
+  Download,
+  ShieldCheck,
+  Film,
+  CheckCircle2,
 } from 'lucide-react';
 import { Header } from '../../components/common/Header';
 import { Footer } from '../../components/common/Footer';
@@ -54,48 +58,57 @@ export const HomePage: React.FC = () => {
       <Header />
 
       {/* Hero Section */}
-      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full">
+      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full space-y-10">
         {/* Welcome Banner */}
-        <div className="relative rounded-3xl overflow-hidden bg-linear-to-br from-museum-dark via-museum-primary to-museum-hover text-white p-6 sm:p-12 shadow-elevated mb-10">
+        <div className="relative rounded-3xl overflow-hidden bg-linear-to-br from-museum-dark via-museum-primary to-museum-hover text-white p-6 sm:p-12 shadow-elevated">
           <div className="absolute -right-12 -bottom-12 w-72 h-72 rounded-full bg-white/5 blur-2xl pointer-events-none" />
 
           <div className="max-w-2xl relative z-10 space-y-4">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 text-museum-light text-xs font-semibold backdrop-blur-xs">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Smart Audio & Visual Guide</span>
+              <span>GM University Heritage Museum Guide</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-serif font-extrabold tracking-tight text-white leading-tight">
-              Bring Museum Exhibits to Life
+              Interactive Digital Museum Experience
             </h1>
 
             <p className="text-sm sm:text-lg text-museum-light/90 leading-relaxed font-normal">
-              Scan physical exhibit QR codes to instantly listen to audio narrations, watch video documentaries, and explore high-resolution archives.
+              Explore galleries, listen to voice narrations, watch video demonstrations, and scan physical exhibit QR codes using your browser or the Android app.
             </p>
 
             {/* Primary Action Buttons */}
-            <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <button
-                onClick={() => setIsScannerOpen(true)}
-                className="flex items-center justify-center space-x-3 px-8 py-4 rounded-2xl bg-white text-museum-primary font-bold text-base hover:bg-museum-light shadow-lg active:scale-95 transition-all"
-              >
-                <QrCode className="w-6 h-6 text-museum-primary" />
-                <span>Scan Artifact QR Code</span>
-              </button>
-
+            <div className="pt-4 flex flex-wrap items-center gap-3">
               <Link
                 to="/museum/gmu-heritage-museum"
-                className="flex items-center justify-center space-x-2 px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-semibold text-base border border-white/20 backdrop-blur-xs transition-colors"
+                className="flex items-center justify-center space-x-2.5 px-6 py-3.5 rounded-2xl bg-white text-museum-primary font-bold text-sm sm:text-base hover:bg-museum-light shadow-lg active:scale-95 transition-all"
               >
-                <Compass className="w-5 h-5" />
-                <span>Browse GMU Museum</span>
+                <Compass className="w-5 h-5 text-museum-primary" />
+                <span>Explore Museum</span>
               </Link>
+
+              <button
+                onClick={() => setIsScannerOpen(true)}
+                className="flex items-center justify-center space-x-2 px-5 py-3.5 rounded-2xl bg-museum-light/20 hover:bg-museum-light/30 text-white font-bold text-sm sm:text-base border border-white/30 backdrop-blur-xs active:scale-95 transition-all"
+              >
+                <QrCode className="w-5 h-5" />
+                <span>Scan Exhibit QR</span>
+              </button>
+
+              <a
+                href="/downloads/gmu-museum-guide.apk"
+                download="gmu-museum-guide.apk"
+                className="flex items-center justify-center space-x-2 px-5 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm sm:text-base shadow-md active:scale-95 transition-all"
+              >
+                <Download className="w-5 h-5" />
+                <span>Download Android App</span>
+              </a>
             </div>
           </div>
         </div>
 
         {/* Quick Search Bar */}
-        <div className="max-w-2xl mx-auto -mt-6 mb-12 relative z-20">
+        <div className="max-w-2xl mx-auto -mt-6 relative z-20">
           <form
             onSubmit={handleSearchSubmit}
             className="relative flex items-center shadow-elevated rounded-2xl bg-white border border-museum-border overflow-hidden p-1.5"
@@ -117,56 +130,69 @@ export const HomePage: React.FC = () => {
           </form>
         </div>
 
-        {/* 3 Step Visitor Guide */}
-        <div className="mb-14">
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-museum-text mb-6 text-center">
-            How It Works
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-white border border-museum-border shadow-card flex flex-col items-center text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-museum-light flex items-center justify-center text-museum-primary font-bold text-lg">
-                1
-              </div>
-              <h3 className="font-bold text-base text-museum-text">Find the QR Plaque</h3>
-              <p className="text-xs sm:text-sm text-museum-muted leading-relaxed">
-                Look for the printed guide code beside any physical display model or glass showcase.
-              </p>
+        {/* Dedicated Android App Download Banner */}
+        <div className="rounded-3xl bg-linear-to-r from-emerald-950 via-slate-900 to-museum-dark text-white p-6 sm:p-8 border border-emerald-800/40 shadow-card flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-start space-x-4">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
+              <Smartphone className="w-8 h-8" />
             </div>
-
-            <div className="p-6 rounded-2xl bg-white border border-museum-border shadow-card flex flex-col items-center text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-museum-light flex items-center justify-center text-museum-primary font-bold text-lg">
-                2
-              </div>
-              <h3 className="font-bold text-base text-museum-text">Scan With Your Phone</h3>
-              <p className="text-xs sm:text-sm text-museum-muted leading-relaxed">
-                Tap the big Scan button above or use your phone camera. No account or download required.
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">
+                Official Visitor Mobile App (Android APK)
+              </span>
+              <h3 className="text-xl sm:text-2xl font-serif font-bold text-white">
+                Download GMU Museum Guide App
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
+                Get native camera QR scanning, seamless deep linking when scanning physical placards, and instant high-quality audio narrations right on your Android phone.
               </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-white border border-museum-border shadow-card flex flex-col items-center text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-museum-light flex items-center justify-center text-museum-primary font-bold text-lg">
-                3
+              <div className="flex flex-wrap gap-4 pt-1 text-xs text-emerald-200">
+                <span className="flex items-center space-x-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Ultra-fast QR Scanner</span>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Interactive Audio Tour</span>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>No Account Required</span>
+                </span>
               </div>
-              <h3 className="font-bold text-base text-museum-text">Listen & Experience</h3>
-              <p className="text-xs sm:text-sm text-museum-muted leading-relaxed">
-                Immerse yourself with curated audio narrations, high-res galleries, and historical insights.
-              </p>
             </div>
+          </div>
+
+          <div className="shrink-0 w-full md:w-auto">
+            <a
+              href="/downloads/gmu-museum-guide.apk"
+              download="gmu-museum-guide.apk"
+              className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-4 rounded-2xl bg-emerald-500 text-slate-950 font-bold hover:bg-emerald-400 shadow-lg active:scale-95 transition-all text-sm sm:text-base"
+            >
+              <Download className="w-5 h-5" />
+              <span>Download APK (15 MB)</span>
+            </a>
           </div>
         </div>
 
-        {/* Featured Museums List */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
+        {/* Featured Galleries & Wings */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl sm:text-2xl font-serif font-bold text-museum-text">
-                Explore Digital Museums
+                Explore Museum Galleries
               </h2>
               <p className="text-xs sm:text-sm text-museum-muted mt-1">
-                Select a museum to view its galleries and curated exhibits
+                Curated collections at GM University Heritage Museum
               </p>
             </div>
+            <Link
+              to="/museum/gmu-heritage-museum"
+              className="text-xs font-semibold text-museum-primary hover:underline flex items-center space-x-1"
+            >
+              <span>View All Wings</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
 
           {loading ? (
@@ -179,9 +205,6 @@ export const HomePage: React.FC = () => {
             <div className="p-8 text-center bg-white rounded-3xl border border-museum-border">
               <Landmark className="w-12 h-12 text-museum-muted mx-auto mb-3" />
               <h3 className="font-bold text-museum-text">No museums registered yet</h3>
-              <p className="text-xs text-museum-muted mt-1">
-                Run the backend seed script to populate sample museum exhibits.
-              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -223,7 +246,7 @@ export const HomePage: React.FC = () => {
                     </p>
 
                     <div className="pt-2 flex items-center justify-between border-t border-museum-border/60 text-xs font-semibold text-museum-primary">
-                      <span>View Museum Galleries</span>
+                      <span>Browse Museum Galleries & Audio Guides</span>
                       <ChevronRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
@@ -231,6 +254,30 @@ export const HomePage: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Staff / Curator Portal Card */}
+        <div className="p-6 rounded-3xl bg-white border border-museum-border shadow-card flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-museum-light text-museum-primary flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-serif font-bold text-base text-museum-text">
+                Museum Staff & Curator Management Portal
+              </h4>
+              <p className="text-xs text-museum-muted">
+                Add new artifacts, upload audio narrations, configure galleries, and print QR codes
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to="/admin/login"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-museum-dark hover:bg-museum-primary text-white text-xs font-bold transition-colors text-center shrink-0"
+          >
+            Access Admin Dashboard →
+          </Link>
         </div>
       </main>
 

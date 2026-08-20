@@ -9,7 +9,9 @@ import {
   Menu,
   X,
   ShieldCheck,
-  Sparkles,
+  Smartphone,
+  Download,
+  Compass,
 } from 'lucide-react';
 import { useAccessibility, TextSize } from '../../context/AccessibilityContext';
 import { useAuth } from '../../context/AuthContext';
@@ -47,13 +49,32 @@ export const Header: React.FC<HeaderProps> = ({ museumTitle, museumSlug }) => {
           </div>
           <div>
             <span className="text-xs uppercase tracking-wider font-semibold text-museum-primary block">
-              Digital Guide
+              GMU Heritage
             </span>
             <span className="text-base sm:text-lg font-bold text-museum-text tracking-tight line-clamp-1">
-              {museumTitle || 'Museum QR Guide'}
+              {museumTitle || 'Digital Museum Guide'}
             </span>
           </div>
         </Link>
+
+        {/* Center Nav (Desktop) */}
+        <nav className="hidden lg:flex items-center space-x-6 text-xs font-semibold text-museum-text">
+          <Link
+            to="/museum/gmu-heritage-museum"
+            className="hover:text-museum-primary transition-colors flex items-center space-x-1.5"
+          >
+            <Compass className="w-4 h-4 text-museum-primary" />
+            <span>Explore Museum</span>
+          </Link>
+          <a
+            href="/downloads/gmu-museum-guide.apk"
+            download="gmu-museum-guide.apk"
+            className="hover:text-museum-primary transition-colors flex items-center space-x-1.5 bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-200"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Download App (APK)</span>
+          </a>
+        </nav>
 
         {/* Right Actions */}
         <div className="flex items-center space-x-2 sm:space-x-3">
@@ -150,9 +171,9 @@ export const Header: React.FC<HeaderProps> = ({ museumTitle, museumSlug }) => {
           ) : (
             <Link
               to="/admin/login"
-              className="hidden md:flex items-center space-x-1 text-xs font-medium text-museum-muted hover:text-museum-primary transition-colors px-2 py-1"
+              className="hidden md:flex items-center space-x-1 text-xs font-semibold text-museum-text hover:text-museum-primary transition-colors px-2.5 py-1.5 rounded-lg border border-museum-border hover:bg-museum-light"
             >
-              <span>Staff Login</span>
+              <span>Admin Login</span>
             </Link>
           )}
 
@@ -171,12 +192,21 @@ export const Header: React.FC<HeaderProps> = ({ museumTitle, museumSlug }) => {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-museum-border bg-white px-4 py-4 space-y-3 shadow-lg">
           <Link
-            to="/"
+            to="/museum/gmu-heritage-museum"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-xl text-sm font-medium text-museum-text hover:bg-museum-light"
           >
-            Explore Museums
+            Explore GMU Museum
           </Link>
+          <a
+            href="/downloads/gmu-museum-guide.apk"
+            download="gmu-museum-guide.apk"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200"
+          >
+            <Smartphone className="w-4 h-4 text-emerald-600" />
+            <span>Download Android App (APK)</span>
+          </a>
           <Link
             to="/scan"
             onClick={() => setMobileMenuOpen(false)}
@@ -205,9 +235,9 @@ export const Header: React.FC<HeaderProps> = ({ museumTitle, museumSlug }) => {
               <Link
                 to="/admin/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-xl text-sm font-medium text-museum-muted hover:text-museum-primary"
+                className="block px-3 py-2 rounded-xl text-sm font-semibold text-museum-primary hover:underline"
               >
-                Museum Staff Login
+                Staff / Admin Portal Login
               </Link>
             )}
           </div>
