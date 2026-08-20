@@ -1,15 +1,21 @@
 [build]
-  command = "npm run build"
+  command = "cd frontend && npm install && npm run build"
   publish = "frontend/dist"
 
 [build.environment]
   NODE_VERSION = "20"
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Proxy /api requests to Netlify Serverless Functions (connected to MongoDB Atlas)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
 
+# Route all frontend SPA routes to index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
