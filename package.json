@@ -2,14 +2,19 @@
   "name": "digital-museum-guide-platform",
   "version": "1.0.0",
   "description": "Modern Digital Museum QR Guide Platform with Audio Narrations, Video Documentaries, QR Placard Generation, and Android App",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "build:backend": "cd backend && npm run build",
-    "build:frontend": "cd frontend && npm run build",
-    "build": "npm run build:backend && npm run build:frontend",
-    "seed": "cd backend && npm run seed",
-    "start": "cd backend && npm start"
+    "build": "npm run build --workspace=frontend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "build:all": "npm run build --workspaces",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "seed": "npm run seed --workspace=backend",
+    "start": "npm start --workspace=backend"
   },
   "keywords": [
     "digital-museum",
@@ -36,5 +41,8 @@
     "qrcode": "^1.5.4",
     "serverless-http": "^4.0.0",
     "uuid": "^14.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }
