@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { toPng } from 'html-to-image';
 import {
   QrCode,
   Printer,
@@ -10,7 +11,7 @@ import {
   Landmark,
   Headphones,
   MapPin,
-  ExternalLink,
+  Sparkles,
 } from 'lucide-react';
 import { Artifact, Museum, Section } from '../../types';
 
@@ -28,7 +29,9 @@ export const QRPrintCardModal: React.FC<QRPrintCardModalProps> = ({
   onClose,
 }) => {
   const [copied, setCopied] = useState(false);
-  const publicUrl = `${window.location.origin}/a/${artifact.shortCode}`;
+  const [isExporting, setIsExporting] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const publicUrl = `https://gmu-museum.netlify.app/a/${artifact.shortCode}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(publicUrl);
@@ -40,158 +43,129 @@ export const QRPrintCardModal: React.FC<QRPrintCardModalProps> = ({
     window.print();
   };
 
-  const handleDownloadSVG = () => {
-    const svgElement = document.getElementById('exhibit-qr-svg');
-    if (!svgElement) return;
-
-    const svgData = new XMLSerializer().serializeToString(svgElement);
-    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `QR-${artifact.shortCode}.svg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleDownloadPNG = () => {
-    const svgElement = document.getElementById('exhibit-qr-svg');
-    if (!svgElement) return;
-
-    const svgData = new XMLSerializer().serializeToString(svgElement);
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
-    img.onload = () => {
-      if (ctx) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, 1024, 1024);
-        const pngUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = pngUrl;
-        link.download = `QR-${artifact.shortCode}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    };
-
-    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+  // Exports ONLY the museum placard card itself as a crisp high-res PNG image
+  const handleDownloadCardPNG = async () => {
+    if (!cardRef.current) return;
+    try {
+      setIsExporting(true);
+      const dataUrl = await toPng(cardRef.current, {
+        pixelRatio: 3, // High DPI / Crisp print resolution
+        backgroundColor: '#FFFFFF',
+      });
+      const link = document.createElement('a');
+      link.download = `${artifact.shortCode}-${artifact.name.replace(/[^a-zA-Z0-9]/g, '_')}-placard.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Error exporting card PNG:', err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-museum-border my-8 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#E2E8F0] my-8 animate-in fade-in zoom-in-95 duration-150">
         {/* Modal Top Bar (Hidden during print) */}
-        <div className="no-print p-4 border-b border-museum-border flex items-center justify-between bg-museum-bg">
+        <div className="no-print p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#FBFCFD]">
           <div className="flex items-center space-x-2">
-            <QrCode className="w-5 h-5 text-museum-primary" />
-            <span className="font-serif font-bold text-sm text-museum-text">
-              Exhibition QR Placard Card
+            <QrCode className="w-5 h-5 text-[#214E86]" />
+            <span className="font-serif font-bold text-sm text-[#172033]">
+              Exhibition QR Placard
             </span>
           </div>
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="p-1.5 rounded-lg text-museum-muted hover:text-museum-text hover:bg-white transition-colors"
+            className="p-1.5 rounded-lg text-[#64748B] hover:text-[#172033] hover:bg-[#EAF2FA] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Printable Exhibit Card Content */}
-        <div className="p-6 sm:p-8 flex flex-col items-center text-center space-y-4 print:p-0 print:border-none">
-          <div className="w-full border-2 border-museum-primary rounded-3xl p-6 sm:p-8 bg-linear-to-b from-museum-light/30 via-white to-white space-y-4 shadow-xs relative">
+        {/* The Card Container that is exported as PNG */}
+        <div className="p-6 sm:p-8 flex flex-col items-center text-center print:p-0 print:border-none">
+          <div
+            ref={cardRef}
+            className="w-full border-2 border-[#214E86] rounded-3xl p-6 sm:p-8 bg-white space-y-4 shadow-sm relative text-center"
+          >
             {/* Museum Header Info */}
-            <div className="flex items-center justify-center space-x-2 text-museum-primary border-b border-museum-border/60 pb-3">
-              <Landmark className="w-5 h-5" />
-              <span className="font-serif font-bold text-sm tracking-wider uppercase">
-                {museum?.name || 'Heritage Museum'}
+            <div className="flex items-center justify-center space-x-2 text-[#214E86] border-b border-[#E2E8F0] pb-3">
+              <Landmark className="w-5 h-5 text-[#214E86]" />
+              <span className="font-serif font-bold text-xs sm:text-sm tracking-wider uppercase">
+                {museum?.name || 'National Heritage Museum'}
               </span>
             </div>
 
-            {/* Artifact Name */}
-            <div>
-              <span className="text-[11px] uppercase tracking-widest font-bold text-museum-muted block mb-1">
-                Official Digital Guide
+            {/* Exhibit Name & Details */}
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase tracking-widest font-extrabold text-[#64748B] block">
+                Official Digital Audio Guide
               </span>
-              <h2 className="text-xl sm:text-2xl font-serif font-extrabold text-museum-text leading-snug">
+              <h2 className="text-xl sm:text-2xl font-serif font-extrabold text-[#172033] leading-snug">
                 {artifact.name}
               </h2>
               {artifact.locationInsideMuseum && (
-                <span className="inline-flex items-center space-x-1 text-xs text-museum-primary font-semibold mt-1">
+                <span className="inline-flex items-center space-x-1 text-xs text-[#214E86] font-semibold mt-1">
                   <MapPin className="w-3.5 h-3.5" />
                   <span>{artifact.locationInsideMuseum}</span>
                 </span>
               )}
             </div>
 
-            {/* High Resolution SVG QR Code */}
-            <div className="p-4 bg-white rounded-2xl border border-museum-border/80 shadow-qr inline-block my-2">
+            {/* High-Contrast SVG QR Code */}
+            <div className="p-4 bg-white rounded-2xl border border-[#CBD5E1] shadow-md inline-block my-2">
               <QRCodeSVG
-                id="exhibit-qr-svg"
                 value={publicUrl}
-                size={220}
+                size={210}
                 level="H"
-                fgColor="#214E86" // Museum deep blue
+                fgColor="#17365F"
                 bgColor="#FFFFFF"
               />
             </div>
 
-            {/* Call To Action Banner */}
-            <div className="space-y-1 pt-1">
-              <div className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-museum-primary text-white text-xs font-bold shadow-xs">
-                <Headphones className="w-3.5 h-3.5" />
-                <span>Scan for Audio Narration & Video</span>
+            {/* Action Callout */}
+            <div className="space-y-1.5 pt-1">
+              <div className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-full bg-[#214E86] text-white text-xs font-bold shadow-sm">
+                <Headphones className="w-3.5 h-3.5 text-amber-300" />
+                <span>Scan for Audio Narration & Video Story</span>
               </div>
-              <p className="text-[11px] text-museum-muted tracking-tight pt-1">
-                Point your phone camera at this QR code • No account required
+              <p className="text-[11px] text-[#64748B] tracking-tight">
+                Point your phone camera at this QR code • No app download needed
               </p>
             </div>
 
-            {/* Short Code Badge */}
-            <div className="text-[10px] text-slate-400 font-mono pt-2 border-t border-museum-border/40">
-              URL: {publicUrl}
+            {/* Clean Exhibit Identifier */}
+            <div className="text-[11px] font-bold text-[#214E86] pt-2 border-t border-[#E2E8F0] tracking-widest uppercase font-mono">
+              Exhibit ID: {artifact.shortCode}
             </div>
           </div>
         </div>
 
-        {/* Modal Action Buttons (Hidden when printing) */}
-        <div className="no-print p-4 bg-museum-bg border-t border-museum-border flex flex-wrap items-center justify-between gap-2">
+        {/* Modal Action Buttons */}
+        <div className="no-print p-4 bg-[#FBFCFD] border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
             <button
+              onClick={handleDownloadCardPNG}
+              disabled={isExporting}
+              className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-[#214E86] text-white text-xs font-bold hover:bg-[#17365F] shadow-sm active:scale-95 transition-all"
+            >
+              <Download className="w-4 h-4" />
+              <span>{isExporting ? 'Generating PNG...' : 'Download Placard (PNG)'}</span>
+            </button>
+
+            <button
               onClick={handlePrint}
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-museum-primary text-white text-xs font-bold hover:bg-museum-hover shadow-xs active:scale-95 transition-all"
+              className="flex items-center space-x-1 px-3 py-2.5 rounded-xl bg-white border border-[#CBD5E1] text-xs font-semibold text-[#172033] hover:bg-[#EAF2FA] transition-colors"
             >
-              <Printer className="w-4 h-4" />
-              <span>Print Card</span>
-            </button>
-
-            <button
-              onClick={handleDownloadPNG}
-              className="flex items-center space-x-1 px-3 py-2 rounded-xl bg-white border border-museum-border text-xs font-semibold text-museum-text hover:bg-museum-light transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>PNG</span>
-            </button>
-
-            <button
-              onClick={handleDownloadSVG}
-              className="flex items-center space-x-1 px-3 py-2 rounded-xl bg-white border border-museum-border text-xs font-semibold text-museum-text hover:bg-museum-light transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>SVG</span>
+              <Printer className="w-4 h-4 text-[#214E86]" />
+              <span>Print</span>
             </button>
           </div>
 
           <button
             onClick={handleCopy}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white border border-museum-border text-xs font-semibold text-museum-text hover:bg-museum-light transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-2.5 rounded-xl bg-white border border-[#CBD5E1] text-xs font-semibold text-[#172033] hover:bg-[#EAF2FA] transition-colors"
           >
             {copied ? (
               <>
@@ -200,8 +174,8 @@ export const QRPrintCardModal: React.FC<QRPrintCardModalProps> = ({
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-museum-muted" />
-                <span>Copy URL</span>
+                <Copy className="w-3.5 h-3.5 text-[#64748B]" />
+                <span>Copy Link</span>
               </>
             )}
           </button>
