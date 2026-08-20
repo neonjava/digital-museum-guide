@@ -24,6 +24,7 @@ import { QRScannerModal } from '../../components/visitor/QRScannerModal';
 import { Museum, Artifact } from '../../types';
 import { api } from '../../services/api';
 import { isNativeApp } from '../../utils/platform';
+import { MobileAppHome } from '../../components/mobile/MobileAppHome';
 
 // High quality initial museum data
 const INITIAL_MUSEUMS: any[] = [
@@ -259,6 +260,11 @@ export const HomePage: React.FC = () => {
     new Set(museums.map((m) => m.address?.city).filter(Boolean))
   ) as string[];
 
+  // If running inside Android Native App, render the dedicated sleek mobile visitor companion
+  if (isNative) {
+    return <MobileAppHome />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FBFCFD] text-[#172033]">
       <Header />
@@ -316,13 +322,13 @@ export const HomePage: React.FC = () => {
                 <span>Explore Museums</span>
               </a>
 
-              <button
-                onClick={() => setIsScannerOpen(true)}
-                className="flex items-center justify-center space-x-2 px-6 py-3.5 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-bold text-sm sm:text-base border border-white/40 active:scale-95 transition-all"
+              <Link
+                to="/qr-showcase"
+                className="flex items-center justify-center space-x-2 px-5 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm sm:text-base shadow-md active:scale-95 transition-all"
               >
-                <QrCode className="w-5 h-5 text-amber-300 animate-pulse" />
-                <span>Scan Artifact QR</span>
-              </button>
+                <QrCode className="w-5 h-5 text-white" />
+                <span>View Test QR Placards</span>
+              </Link>
 
               {/* ONLY on Web, NEVER in native Android App */}
               {!isNative && (

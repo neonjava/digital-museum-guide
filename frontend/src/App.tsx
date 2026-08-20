@@ -9,6 +9,7 @@ import { SectionPage } from './pages/visitor/SectionPage';
 import { ArtifactPage } from './pages/visitor/ArtifactPage';
 import { ScanPage } from './pages/visitor/ScanPage';
 import { SearchPage } from './pages/visitor/SearchPage';
+import { QRShowcasePage } from './pages/visitor/QRShowcasePage';
 
 // Admin Pages
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
@@ -52,6 +53,8 @@ export const App: React.FC = () => {
       <Route path="/artifact/:artifactId" element={<ArtifactPage />} />
       <Route path="/scan" element={<ScanPage />} />
       <Route path="/search" element={<SearchPage />} />
+      <Route path="/qr-showcase" element={<QRShowcasePage />} />
+      <Route path="/placards" element={<QRShowcasePage />} />
 
       {/* 2. Admin Auth */}
       <Route path="/admin/login" element={<AdminLoginPage />} />

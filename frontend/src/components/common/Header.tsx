@@ -67,6 +67,14 @@ export const Header: React.FC<HeaderProps> = ({ museumTitle, museumSlug }) => {
             <span>Explore Galleries</span>
           </Link>
 
+          <Link
+            to="/qr-showcase"
+            className="hover:text-[#214E86] transition-colors flex items-center space-x-1.5"
+          >
+            <QrCode className="w-4 h-4 text-amber-600" />
+            <span>Test QR Placards</span>
+          </Link>
+
           {/* Only show Download App on Web browser, NEVER inside the Android App */}
           {!isNative && (
             <a
