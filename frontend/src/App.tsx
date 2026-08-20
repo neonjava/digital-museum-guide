@@ -1,6 +1,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { isNativeApp } from './utils/platform';
+import { MobileAppLayout } from './components/mobile/MobileAppLayout';
 
 // Visitor Pages
 import { HomePage } from './pages/visitor/HomePage';
@@ -22,6 +24,15 @@ import { AdminQRCodesPage } from './pages/admin/AdminQRCodesPage';
 import { AdminMediaPage } from './pages/admin/AdminMediaPage';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
+
+// Visitor Route Wrapper (Applies MobileAppLayout with permanent bottom navbar & "Digital Museum Guide" top bar on native app)
+const VisitorRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
+  const isNative = isNativeApp();
+  if (isNative) {
+    return <MobileAppLayout>{element}</MobileAppLayout>;
+  }
+  return element;
+};
 
 // Protected Route Component
 const ProtectedAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -45,16 +56,22 @@ const ProtectedAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children
 export const App: React.FC = () => {
   return (
     <Routes>
-      {/* 1. Visitor Public Routes */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/museum/:museumId" element={<MuseumPage />} />
-      <Route path="/museum/:museumId/section/:sectionId" element={<SectionPage />} />
-      <Route path="/a/:artifactId" element={<ArtifactPage />} />
-      <Route path="/artifact/:artifactId" element={<ArtifactPage />} />
-      <Route path="/scan" element={<ScanPage />} />
-      <Route path="/search" element={<SearchPage />} />
-      <Route path="/qr-showcase" element={<QRShowcasePage />} />
-      <Route path="/placards" element={<QRShowcasePage />} />
+      {/* 1. Visitor Public Routes (Wrapped with persistent mobile nav & Digital Museum Guide header on Android) */}
+      <Route path="/" element={<VisitorRoute element={<HomePage />} />} />
+      <Route path="/museum/:museumId" element={<VisitorRoute element={<MuseumPage />} />} />
+      <Route
+        path="/museum/:museumId/section/:sectionId"
+        element={<VisitorRoute element={<SectionPage />} />}
+      />
+      <Route path="/a/:artifactId" element={<VisitorRoute element={<ArtifactPage />} />} />
+      <Route
+        path="/artifact/:artifactId"
+        element={<VisitorRoute element={<ArtifactPage />} />}
+      />
+      <Route path="/scan" element={<VisitorRoute element={<ScanPage />} />} />
+      <Route path="/search" element={<VisitorRoute element={<SearchPage />} />} />
+      <Route path="/qr-showcase" element={<VisitorRoute element={<QRShowcasePage />} />} />
+      <Route path="/placards" element={<VisitorRoute element={<QRShowcasePage />} />} />
 
       {/* 2. Admin Auth */}
       <Route path="/admin/login" element={<AdminLoginPage />} />
