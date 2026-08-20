@@ -15,15 +15,17 @@ import {
   Bookmark,
   Check,
   ArrowRight,
-  ExternalLink,
+  Sparkles,
+  Layers,
 } from 'lucide-react';
 import { Header } from '../../components/common/Header';
 import { Footer } from '../../components/common/Footer';
 import { QRScannerModal } from '../../components/visitor/QRScannerModal';
 import { Museum, Artifact } from '../../types';
 import { api } from '../../services/api';
+import { isNativeApp } from '../../utils/platform';
 
-// High quality initial museum data so the dashboard never renders an empty state
+// High quality initial museum data
 const INITIAL_MUSEUMS: any[] = [
   {
     _id: 'm1',
@@ -176,7 +178,7 @@ const INITIAL_ARTIFACTS: Partial<Artifact>[] = [
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const [museums, setMuseums] = useState<Museum[]>(INITIAL_MUSEUMS);
+  const [museums, setMuseums] = useState<any[]>(INITIAL_MUSEUMS);
   const [featuredArtifacts, setFeaturedArtifacts] = useState<any[]>(INITIAL_ARTIFACTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -184,6 +186,7 @@ export const HomePage: React.FC = () => {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [savedMuseumIds, setSavedMuseumIds] = useState<string[]>([]);
   const [shareToast, setShareToast] = useState<string | null>(null);
+  const isNative = isNativeApp();
 
   useEffect(() => {
     const fetchLiveMuseums = async () => {
@@ -214,7 +217,7 @@ export const HomePage: React.FC = () => {
     );
   };
 
-  const handleShare = (museum: Museum, e: React.MouseEvent) => {
+  const handleShare = (museum: any, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const url = `${window.location.origin}/museum/${museum.slug || museum._id}`;
@@ -260,8 +263,8 @@ export const HomePage: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-[#FBFCFD] text-[#172033]">
       <Header />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 w-full space-y-12">
+      {/* Main Full-Width Content Container */}
+      <main className="flex-1 w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-10 space-y-12">
         {/* Toast alert */}
         {shareToast && (
           <div className="fixed bottom-6 right-6 z-50 bg-[#17365F] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center space-x-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -270,17 +273,16 @@ export const HomePage: React.FC = () => {
           </div>
         )}
 
-        {/* 1. Hero Showcase Banner with Solid Contrast Background */}
+        {/* 1. Hero Showcase Banner */}
         <section
           style={{ backgroundColor: '#17365F' }}
           className="relative rounded-3xl overflow-hidden text-white shadow-xl border border-slate-700"
         >
-          {/* Overlay image */}
           <div className="absolute inset-0 z-0">
             <img
               src="https://images.unsplash.com/photo-1588714477688-cf28a50e94f7?auto=format&fit=crop&w=1800&q=80"
               alt="Museum background"
-              className="w-full h-full object-cover opacity-20"
+              className="w-full h-full object-cover opacity-25"
             />
             <div
               style={{
@@ -290,18 +292,18 @@ export const HomePage: React.FC = () => {
             />
           </div>
 
-          <div className="relative z-10 px-6 py-12 sm:px-12 sm:py-16 max-w-3xl space-y-5">
+          <div className="relative z-10 px-6 py-12 sm:px-12 sm:py-16 max-w-4xl space-y-5">
             <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/15 text-white text-xs font-semibold border border-white/20">
               <Landmark className="w-3.5 h-3.5 text-amber-300" />
-              <span>Digital Museum QR Guide Platform</span>
+              <span>{isNative ? 'Official Museum Mobile Companion' : 'National Digital Museum Guide'}</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-serif font-extrabold tracking-tight text-white leading-tight">
               Discover India's Cultural & Scientific Heritage
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-100 leading-relaxed font-normal">
-              Explore thousands of artifacts, royal regalia, ancient manuscripts, and aerospace innovations across premier museums. Scan physical QR placards or experience voice-guided audio tours online.
+            <p className="text-sm sm:text-base text-slate-100 leading-relaxed font-normal max-w-2xl">
+              Explore thousands of artifacts, royal regalia, ancient manuscripts, and aerospace innovations across premier museums. Scan physical QR placards or experience voice-guided audio tours.
             </p>
 
             {/* Hero CTA buttons */}
@@ -316,20 +318,23 @@ export const HomePage: React.FC = () => {
 
               <button
                 onClick={() => setIsScannerOpen(true)}
-                className="flex items-center justify-center space-x-2 px-5 py-3.5 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-bold text-sm sm:text-base border border-white/40 active:scale-95 transition-all"
+                className="flex items-center justify-center space-x-2 px-6 py-3.5 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-bold text-sm sm:text-base border border-white/40 active:scale-95 transition-all"
               >
-                <QrCode className="w-5 h-5 text-amber-300" />
+                <QrCode className="w-5 h-5 text-amber-300 animate-pulse" />
                 <span>Scan Artifact QR</span>
               </button>
 
-              <a
-                href="/downloads/gmu-museum-guide.apk"
-                download="gmu-museum-guide.apk"
-                className="flex items-center justify-center space-x-2 px-5 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm sm:text-base shadow-md active:scale-95 transition-all"
-              >
-                <Download className="w-5 h-5" />
-                <span>Download Android App</span>
-              </a>
+              {/* ONLY on Web, NEVER in native Android App */}
+              {!isNative && (
+                <a
+                  href="/downloads/gmu-museum-guide.apk"
+                  download="gmu-museum-guide.apk"
+                  className="flex items-center justify-center space-x-2 px-5 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm sm:text-base shadow-md active:scale-95 transition-all"
+                >
+                  <Download className="w-5 h-5" />
+                  <span>Download Android App</span>
+                </a>
+              )}
             </div>
           </div>
         </section>
@@ -383,7 +388,7 @@ export const HomePage: React.FC = () => {
               />
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-[#214E86] text-white text-xs font-bold hover:bg-[#17365F] transition-colors shrink-0"
+                className="px-6 py-2.5 rounded-xl bg-[#214E86] text-white text-xs font-bold hover:bg-[#17365F] transition-colors shrink-0"
               >
                 Search
               </button>
@@ -428,7 +433,7 @@ export const HomePage: React.FC = () => {
                   className="group rounded-3xl bg-white border border-[#E2E8F0] shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col justify-between"
                 >
                   {/* Top Image Banner */}
-                  <div className="relative h-52 bg-slate-900 overflow-hidden">
+                  <div className="relative h-56 bg-slate-900 overflow-hidden">
                     <img
                       src={
                         museum.coverImage ||
@@ -527,7 +532,7 @@ export const HomePage: React.FC = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredArtifacts.map((art) => (
               <Link
                 key={art._id}
@@ -569,40 +574,78 @@ export const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* 5. Mobile Companion App Banner with Guaranteed High Contrast Background */}
-        <section
-          style={{
-            backgroundColor: '#17365F',
-            background: 'linear-gradient(135deg, #17365F 0%, #214E86 100%)',
-          }}
-          className="rounded-3xl text-white p-6 sm:p-10 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-700"
-        >
-          <div className="flex items-start space-x-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 text-amber-300 flex items-center justify-center shrink-0">
-              <Smartphone className="w-8 h-8" />
-            </div>
-            <div className="space-y-1.5">
-              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider block">
-                Official Visitor Companion App
-              </span>
-              <h3 className="text-xl sm:text-2xl font-serif font-bold text-white">
-                Download the Digital Museum Guide for Android
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-100 max-w-xl leading-relaxed font-normal">
-                Scan physical QR plaques beside glass cases, listen to curated audio guides, and explore high-res artifacts offline.
-              </p>
-            </div>
-          </div>
-
-          <a
-            href="/downloads/gmu-museum-guide.apk"
-            download="gmu-museum-guide.apk"
-            className="w-full sm:w-auto shrink-0 flex items-center justify-center space-x-2.5 px-6 py-4 rounded-2xl bg-white text-[#214E86] font-bold hover:bg-slate-100 shadow-lg active:scale-95 transition-all text-sm"
+        {/* 5. Mobile Companion App Section (Only on Web, never inside the app) */}
+        {!isNative && (
+          <section
+            style={{
+              backgroundColor: '#17365F',
+              background: 'linear-gradient(135deg, #17365F 0%, #214E86 100%)',
+            }}
+            className="rounded-3xl text-white p-6 sm:p-10 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-700"
           >
-            <Download className="w-5 h-5 text-[#214E86]" />
-            <span>Download APK (15 MB)</span>
-          </a>
-        </section>
+            <div className="flex items-start space-x-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 text-amber-300 flex items-center justify-center shrink-0">
+                <Smartphone className="w-8 h-8" />
+              </div>
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold text-amber-300 uppercase tracking-wider block">
+                  Official Visitor Companion App
+                </span>
+                <h3 className="text-xl sm:text-2xl font-serif font-bold text-white">
+                  Download the Digital Museum Guide for Android
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-100 max-w-xl leading-relaxed font-normal">
+                  Scan physical QR plaques beside glass cases, listen to curated audio guides, and explore high-res artifacts offline.
+                </p>
+              </div>
+            </div>
+
+            <a
+              href="/downloads/gmu-museum-guide.apk"
+              download="gmu-museum-guide.apk"
+              className="w-full sm:w-auto shrink-0 flex items-center justify-center space-x-2.5 px-6 py-4 rounded-2xl bg-white text-[#214E86] font-bold hover:bg-slate-100 shadow-lg active:scale-95 transition-all text-sm"
+            >
+              <Download className="w-5 h-5 text-[#214E86]" />
+              <span>Download APK (15 MB)</span>
+            </a>
+          </section>
+        )}
+
+        {/* Native Android App Visitor Companion Banner (Shown only inside the Android App) */}
+        {isNative && (
+          <section
+            style={{
+              backgroundColor: '#17365F',
+              background: 'linear-gradient(135deg, #17365F 0%, #214E86 100%)',
+            }}
+            className="rounded-3xl text-white p-6 sm:p-10 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6 border border-slate-700"
+          >
+            <div className="flex items-start space-x-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 text-amber-300 flex items-center justify-center shrink-0">
+                <QrCode className="w-8 h-8" />
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-amber-300 uppercase tracking-wider block">
+                  Interactive Museum Visitor Scanner
+                </span>
+                <h3 className="text-xl sm:text-2xl font-serif font-bold text-white">
+                  Scan Physical Exhibit Placards
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-100 max-w-xl leading-relaxed font-normal">
+                  Aim your camera at any exhibit QR code to immediately unlock its audio narration, videos, and historical stories.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsScannerOpen(true)}
+              className="w-full sm:w-auto shrink-0 flex items-center justify-center space-x-2.5 px-6 py-4 rounded-2xl bg-white text-[#214E86] font-bold hover:bg-slate-100 shadow-lg active:scale-95 transition-all text-sm"
+            >
+              <QrCode className="w-5 h-5 text-[#214E86]" />
+              <span>Launch Camera Scanner</span>
+            </button>
+          </section>
+        )}
       </main>
 
       <Footer />
