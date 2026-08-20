@@ -3,19 +3,16 @@
   publish = "frontend/dist"
   functions = "netlify/functions"
 
-[build.environment]
-  NODE_VERSION = "20"
-  MONGODB_URI = "mongodb+srv://autosphere:neonjavadev13234@autosphere.nqica9s.mongodb.net/museum_guide?retryWrites=true&w=majority"
-  JWT_SECRET = "REDACTED_JWT_SECRET"
-  STORAGE_PROVIDER = "local"
+[functions]
+  directory = "netlify/functions"
 
-# Route all /api/* requests directly to the Netlify Serverless Function
+# Proxy /api requests to Netlify Serverless Functions
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
 
-# Route all frontend SPA pages to index.html
+# Route all frontend SPA routes to index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
