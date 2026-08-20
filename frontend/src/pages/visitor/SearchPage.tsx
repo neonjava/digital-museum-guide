@@ -175,29 +175,7 @@ export const SearchPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBFCFD] text-[#172033]">
-      {!isNative ? (
-        <Header />
-      ) : (
-        /* Mobile App Consistent Top Header */
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between shadow-xs">
-          <div className="flex items-center space-x-2.5">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-1 rounded-xl text-[#214E86] active:bg-[#EAF2FA]"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-xl bg-[#214E86] text-white flex items-center justify-center">
-                <Landmark className="w-4 h-4 text-amber-300" />
-              </div>
-              <span className="font-serif font-bold text-sm text-[#172033]">
-                Exhibit Directory
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+      {!isNative && <Header />}
 
       <main className="flex-1 w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-8 space-y-6">
         <div>
@@ -205,7 +183,7 @@ export const SearchPage: React.FC = () => {
             {activeFilter === 'audio' ? 'Audio Tour Guides' : 'Search Museum Exhibits'}
           </h1>
           <p className="text-xs sm:text-sm text-[#64748B] mt-1">
-            Browse artifacts, audio guides, video demonstrations, and gallery collections
+            Browse artifacts, audio guides, video demonstrations, and gallery collections across Indian museums
           </p>
         </div>
 

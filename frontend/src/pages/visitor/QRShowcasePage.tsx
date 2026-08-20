@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Header } from '../../components/common/Header';
 import { Footer } from '../../components/common/Footer';
+import { isNativeApp } from '../../utils/platform';
 
 const SEEDED_EXHIBITS = [
   {
@@ -96,6 +97,7 @@ const SEEDED_EXHIBITS = [
 export const QRShowcasePage: React.FC = () => {
   const [selectedMuseum, setSelectedMuseum] = useState('ALL');
   const [downloadingCode, setDownloadingCode] = useState<string | null>(null);
+  const isNative = isNativeApp();
 
   const filteredExhibits = SEEDED_EXHIBITS.filter((ex) =>
     selectedMuseum === 'ALL' ? true : ex.museum.toLowerCase().includes(selectedMuseum.toLowerCase())
@@ -124,9 +126,9 @@ export const QRShowcasePage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBFCFD] text-[#172033]">
-      <Header />
+      {!isNative && <Header />}
 
-      <main className="flex-1 w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 py-8 space-y-8">
+      <main className="flex-1 w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-8 space-y-8">
         {/* Banner */}
         <section
           style={{ backgroundColor: '#17365F' }}
@@ -253,7 +255,7 @@ export const QRShowcasePage: React.FC = () => {
         </div>
       </main>
 
-      <Footer />
+      {!isNative && <Footer />}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Museum } from '../models/Museum';
 import { Section } from '../models/Section';
 import { Artifact } from '../models/Artifact';
@@ -7,8 +8,53 @@ import { AuthRequest } from '../middleware/auth';
 
 export const getMuseums = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const museums = await Museum.find({ isActive: true }).sort({ createdAt: -1 });
-    res.json({ success: true, count: museums.length, data: museums });
+    const museums = await Museum.find({ isActive: true }).sort({ createdAt: -1 }).lean();
+
+    const populatedMuseums = await Promise.all(
+      museums.map(async (museum) => {
+        const sections = await Section.find({ museumId: museum._id, isActive: true })
+          .sort({ displayOrder: 1, createdAt: 1 })
+          .lean();
+
+        const artifacts = await Artifact.find({ museumId: museum._id })
+          .populate('qrCodeId')
+          .populate('sectionId', 'name description coverImage')
+          .sort({ displayOrder: 1, createdAt: 1 })
+          .lean();
+
+        const sectionsWithArtifacts = sections.map((sec) => {
+          const secArtifacts = artifacts.filter(
+            (art) =>
+              art.sectionId &&
+              ((art.sectionId as any)._id
+                ? (art.sectionId as any)._id.toString()
+                : (art.sectionId as any).toString()) === sec._id.toString()
+          );
+          return {
+            ...sec,
+            artifacts: secArtifacts,
+            artifactCount: secArtifacts.length,
+          };
+        });
+
+        const publishedArtifactsCount = artifacts.filter((a) => a.status === 'PUBLISHED').length;
+        const qrCodesCount = artifacts.filter((a) => a.qrCodeId).length;
+
+        return {
+          ...museum,
+          sections: sectionsWithArtifacts,
+          artifacts,
+          stats: {
+            sectionsCount: sections.length,
+            artifactsCount: artifacts.length,
+            publishedArtifactsCount,
+            qrCodesCount,
+          },
+        };
+      })
+    );
+
+    res.json({ success: true, count: populatedMuseums.length, data: populatedMuseums });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -17,23 +63,55 @@ export const getMuseums = async (_req: Request, res: Response): Promise<void> =>
 export const getMuseumById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const museum = await Museum.findById(id);
+    let query: any = { _id: id };
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      query = { slug: id.toLowerCase() };
+    }
+
+    const museum = await Museum.findOne(query).lean();
     if (!museum) {
       res.status(404).json({ success: false, message: 'Museum not found' });
       return;
     }
 
-    const sectionsCount = await Section.countDocuments({ museumId: id, isActive: true });
-    const artifactsCount = await Artifact.countDocuments({ museumId: id });
-    const publishedArtifactsCount = await Artifact.countDocuments({ museumId: id, status: 'PUBLISHED' });
-    const qrCodesCount = await QRCode.countDocuments({ museumId: id });
+    const sections = await Section.find({ museumId: museum._id, isActive: true })
+      .sort({ displayOrder: 1, createdAt: 1 })
+      .lean();
+
+    const artifacts = await Artifact.find({ museumId: museum._id })
+      .populate('qrCodeId')
+      .populate('sectionId', 'name description coverImage')
+      .sort({ displayOrder: 1, createdAt: 1 })
+      .lean();
+
+    const sectionsWithArtifacts = sections.map((sec) => {
+      const secArtifacts = artifacts.filter(
+        (art) =>
+          art.sectionId &&
+          ((art.sectionId as any)._id
+            ? (art.sectionId as any)._id.toString()
+            : (art.sectionId as any).toString()) === sec._id.toString()
+      );
+      return {
+        ...sec,
+        artifacts: secArtifacts,
+        artifactCount: secArtifacts.length,
+      };
+    });
+
+    const publishedArtifactsCount = artifacts.filter((a) => a.status === 'PUBLISHED').length;
+    const qrCodesCount = artifacts.filter((a) => a.qrCodeId).length;
 
     res.json({
       success: true,
-      data: museum,
+      data: {
+        ...museum,
+        sections: sectionsWithArtifacts,
+        artifacts,
+      },
       stats: {
-        sectionsCount,
-        artifactsCount,
+        sectionsCount: sections.length,
+        artifactsCount: artifacts.length,
         publishedArtifactsCount,
         qrCodesCount,
       },
@@ -115,7 +193,7 @@ export const deleteMuseum = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    // Cascade soft delete or cleanup
+    // Cascade delete associated records
     await Section.deleteMany({ museumId: id });
     await Artifact.deleteMany({ museumId: id });
     await QRCode.deleteMany({ museumId: id });

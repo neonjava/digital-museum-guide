@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Analytics, TrafficSource, EventType } from '../models/Analytics';
+import { Museum } from '../models/Museum';
 import { Artifact } from '../models/Artifact';
 import { QRCode } from '../models/QRCode';
-import mongoose from 'mongoose';
 
 export const trackEvent = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -19,9 +20,17 @@ export const trackEvent = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    let validMuseumId = museumId;
+    if (!mongoose.Types.ObjectId.isValid(museumId)) {
+      const museum = await Museum.findOne({ slug: String(museumId).toLowerCase() });
+      if (museum) {
+        validMuseumId = museum._id;
+      }
+    }
+
     const event = new Analytics({
       artifactId: artifactId || undefined,
-      museumId,
+      museumId: validMuseumId,
       sectionId: sectionId || undefined,
       eventType: eventType as EventType,
       source: (['QR', 'WEB', 'APP'].includes(source) ? source : 'WEB') as TrafficSource,
@@ -61,7 +70,18 @@ export const trackEvent = async (req: Request, res: Response): Promise<void> => 
 export const getMuseumAnalytics = async (req: Request, res: Response): Promise<void> => {
   try {
     const { museumId } = req.params;
-    const museumObjectId = new mongoose.Types.ObjectId(museumId);
+    let museumObjectId: mongoose.Types.ObjectId;
+
+    if (mongoose.Types.ObjectId.isValid(museumId)) {
+      museumObjectId = new mongoose.Types.ObjectId(museumId);
+    } else {
+      const museum = await Museum.findOne({ slug: museumId.toLowerCase() });
+      if (!museum) {
+        res.status(404).json({ success: false, message: 'Museum not found' });
+        return;
+      }
+      museumObjectId = museum._id as mongoose.Types.ObjectId;
+    }
 
     // 1. Total events breakdown
     const totalViews = await Analytics.countDocuments({
@@ -79,29 +99,44 @@ export const getMuseumAnalytics = async (req: Request, res: Response): Promise<v
       eventType: 'AUDIO_PLAY',
     });
 
+    const totalVideoPlays = await Analytics.countDocuments({
+      museumId: museumObjectId,
+      eventType: 'VIDEO_PLAY',
+    });
+
     // 2. Traffic source breakdown
     const sourceBreakdown = await Analytics.aggregate([
       { $match: { museumId: museumObjectId } },
       { $group: { _id: '$source', count: { $sum: 1 } } },
     ]);
 
+    const sourceMap = {
+      QR: 0,
+      WEB: 0,
+      APP: 0,
+      ...sourceBreakdown.reduce((acc: any, curr: any) => {
+        acc[curr._id] = curr.count;
+        return acc;
+      }, {}),
+    };
+
     // 3. Top viewed artifacts
     const topViewedArtifacts = await Artifact.find({ museumId: museumObjectId, status: 'PUBLISHED' })
       .sort({ viewCount: -1 })
       .limit(6)
-      .select('name shortCode viewCount scanCount images locationInsideMuseum');
+      .select('name shortCode viewCount scanCount images locationInsideMuseum datePeriod');
 
     // 4. Top scanned artifacts
     const topScannedArtifacts = await Artifact.find({ museumId: museumObjectId, status: 'PUBLISHED' })
       .sort({ scanCount: -1 })
       .limit(6)
-      .select('name shortCode viewCount scanCount images locationInsideMuseum');
+      .select('name shortCode viewCount scanCount images locationInsideMuseum datePeriod');
 
-    // 5. Recent events (latest 10)
+    // 5. Recent events (latest 15)
     const recentActivity = await Analytics.find({ museumId: museumObjectId })
       .populate('artifactId', 'name shortCode')
       .sort({ timestamp: -1 })
-      .limit(10);
+      .limit(15);
 
     res.json({
       success: true,
@@ -110,11 +145,10 @@ export const getMuseumAnalytics = async (req: Request, res: Response): Promise<v
           totalViews,
           totalQRScans,
           totalAudioPlays,
+          totalVideoPlays,
+          totalEvents: totalViews + totalQRScans + totalAudioPlays + totalVideoPlays,
         },
-        sources: sourceBreakdown.reduce((acc: any, curr: any) => {
-          acc[curr._id] = curr.count;
-          return acc;
-        }, {}),
+        sources: sourceMap,
         topViewedArtifacts,
         topScannedArtifacts,
         recentActivity,

@@ -104,35 +104,53 @@ export const SectionPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBFCFD] text-[#172033]">
-      {!isNative ? (
-        <Header />
-      ) : (
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between shadow-xs">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center space-x-1 text-xs font-bold text-[#214E86] p-1 rounded-xl active:bg-[#EAF2FA]"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span>Back</span>
-          </button>
-          <span className="font-serif font-bold text-sm text-[#172033] truncate max-w-[200px]">
-            {section?.name || 'Gallery Wing'}
-          </span>
-          <div className="w-6" />
-        </div>
-      )}
+      {!isNative && <Header />}
 
       <main className="flex-1 w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-10 space-y-8">
+        {/* Navigation Breadcrumb (Desktop) */}
+        {!isNative && (
+          <div className="flex items-center space-x-2 text-xs sm:text-sm text-[#64748B] overflow-x-auto pb-1">
+            <Link to="/" className="hover:text-[#214E86] shrink-0 font-medium">
+              Museums
+            </Link>
+            <span>/</span>
+            {museumId && (
+              <>
+                <Link
+                  to={`/museum/${museumId}`}
+                  className="hover:text-[#214E86] font-medium shrink-0"
+                >
+                  Museum Hub
+                </Link>
+                <span>/</span>
+              </>
+            )}
+            <span className="text-[#172033] font-bold truncate">{section?.name}</span>
+          </div>
+        )}
+
         {/* Section Banner */}
         <div
           style={{ backgroundColor: '#17365F' }}
           className="relative rounded-3xl overflow-hidden text-white shadow-xl border border-slate-700 p-6 sm:p-10"
         >
           <div className="max-w-3xl relative z-10 space-y-3">
-            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-semibold">
-              <Layers className="w-3.5 h-3.5 text-amber-300" />
-              <span>Gallery Collection</span>
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-semibold">
+                <Layers className="w-3.5 h-3.5 text-amber-300" />
+                <span>Gallery Wing</span>
+              </span>
+
+              {museumId && (
+                <Link
+                  to={`/museum/${museumId}`}
+                  className="inline-flex items-center space-x-1 text-xs text-amber-300 font-semibold hover:underline"
+                >
+                  <span>Return to Museum Explorer</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
+            </div>
 
             <h1 className="text-2xl sm:text-4xl font-serif font-extrabold text-white tracking-tight">
               {section?.name}

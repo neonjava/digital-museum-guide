@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
-import { Artifact, IArtifact } from '../models/Artifact';
+import mongoose from 'mongoose';
+import crypto from 'crypto';
+import { Artifact } from '../models/Artifact';
+import { Museum } from '../models/Museum';
 import { QRCode } from '../models/QRCode';
 import { QRService } from '../services/qrService';
 import { AuthRequest } from '../middleware/auth';
-import crypto from 'crypto';
 
 // Helper to generate a clean, short unique alphanumeric identifier (e.g., 'art_8f29d2')
 const generateUniqueShortCode = (): string => {
@@ -24,29 +26,46 @@ export const getArtifacts = async (req: Request, res: Response): Promise<void> =
 
     const query: any = {};
 
-    if (museumId) query.museumId = museumId;
-    if (sectionId) query.sectionId = sectionId;
-    if (status) query.status = status;
+    if (museumId) {
+      if (mongoose.Types.ObjectId.isValid(String(museumId))) {
+        query.museumId = museumId;
+      } else {
+        const museum = await Museum.findOne({ slug: String(museumId).toLowerCase() });
+        if (museum) {
+          query.museumId = museum._id;
+        }
+      }
+    }
+
+    if (sectionId && mongoose.Types.ObjectId.isValid(String(sectionId))) {
+      query.sectionId = sectionId;
+    }
+
+    if (status) {
+      query.status = status;
+    }
 
     if (search) {
-      const searchRegex = new RegExp(String(search), 'i');
+      const searchRegex = new RegExp(String(search).trim(), 'i');
       query.$or = [
         { name: searchRegex },
         { shortDescription: searchRegex },
         { shortCode: searchRegex },
         { tags: { $in: [searchRegex] } },
         { locationInsideMuseum: searchRegex },
+        { creatorOrigin: searchRegex },
+        { datePeriod: searchRegex },
       ];
     }
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = parseInt(limit as string, 10);
+    const pageNum = parseInt(page as string, 10) || 1;
+    const limitNum = parseInt(limit as string, 10) || 50;
     const skip = (pageNum - 1) * limitNum;
 
     const total = await Artifact.countDocuments(query);
     const artifacts = await Artifact.find(query)
-      .populate('museumId', 'name slug logo')
-      .populate('sectionId', 'name')
+      .populate('museumId', 'name slug logo coverImage description address contact openingHours website')
+      .populate('sectionId', 'name description coverImage')
       .populate('qrCodeId')
       .sort({ displayOrder: 1, createdAt: -1 })
       .skip(skip)
@@ -70,8 +89,15 @@ export const getArtifacts = async (req: Request, res: Response): Promise<void> =
 export const getArtifactById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const artifact = await Artifact.findById(id)
-      .populate('museumId', 'name slug logo address contact openingHours')
+
+    const shortCodeRegex = new RegExp(`^${id}$`, 'i');
+    let query: any = { shortCode: shortCodeRegex };
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      query = { $or: [{ _id: id }, { shortCode: shortCodeRegex }] };
+    }
+
+    const artifact = await Artifact.findOne(query)
+      .populate('museumId', 'name slug logo coverImage description address contact openingHours website')
       .populate('sectionId', 'name description coverImage')
       .populate('qrCodeId');
 
@@ -80,7 +106,36 @@ export const getArtifactById = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    res.json({ success: true, data: artifact });
+    const sectionId = (artifact.sectionId as any)?._id || artifact.sectionId;
+    const museumId = (artifact.museumId as any)?._id || artifact.museumId;
+
+    let relatedArtifacts: any[] = await Artifact.find({
+      sectionId,
+      _id: { $ne: artifact._id },
+      status: 'PUBLISHED',
+    })
+      .limit(6)
+      .select('name shortCode shortDescription images locationInsideMuseum datePeriod tags audioNarration video')
+      .lean();
+
+    if (relatedArtifacts.length === 0) {
+      relatedArtifacts = await Artifact.find({
+        museumId,
+        _id: { $ne: artifact._id },
+        status: 'PUBLISHED',
+      })
+        .limit(6)
+        .select('name shortCode shortDescription images locationInsideMuseum datePeriod tags audioNarration video')
+        .lean();
+    }
+
+    res.json({
+      success: true,
+      data: artifact,
+      relatedArtifacts,
+      museum: artifact.museumId,
+      section: artifact.sectionId,
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -165,8 +220,8 @@ export const createArtifact = async (req: AuthRequest, res: Response): Promise<v
     await artifact.save();
 
     const populatedArtifact = await Artifact.findById(artifact._id)
-      .populate('museumId', 'name slug')
-      .populate('sectionId', 'name')
+      .populate('museumId', 'name slug logo coverImage description')
+      .populate('sectionId', 'name description coverImage')
       .populate('qrCodeId');
 
     res.status(201).json({ success: true, data: populatedArtifact });
@@ -180,7 +235,7 @@ export const updateArtifact = async (req: AuthRequest, res: Response): Promise<v
     const { id } = req.params;
     const updates = { ...req.body };
 
-    // Prevent overwriting the unique shortCode or publicUrl to ensure existing QR codes never break
+    // Prevent overwriting the unique shortCode or qrCodeId to ensure existing QR codes never break
     delete updates.shortCode;
     delete updates.qrCodeId;
 
@@ -192,8 +247,8 @@ export const updateArtifact = async (req: AuthRequest, res: Response): Promise<v
       new: true,
       runValidators: true,
     })
-      .populate('museumId', 'name slug')
-      .populate('sectionId', 'name')
+      .populate('museumId', 'name slug logo coverImage description')
+      .populate('sectionId', 'name description coverImage')
       .populate('qrCodeId');
 
     if (!artifact) {
@@ -222,8 +277,8 @@ export const updateArtifactStatus = async (req: AuthRequest, res: Response): Pro
       { status },
       { new: true }
     )
-      .populate('museumId', 'name slug')
-      .populate('sectionId', 'name')
+      .populate('museumId', 'name slug logo coverImage description')
+      .populate('sectionId', 'name description coverImage')
       .populate('qrCodeId');
 
     if (!artifact) {

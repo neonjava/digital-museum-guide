@@ -16,8 +16,11 @@ import {
   Layers,
   Sparkles,
   AlertCircle,
-  ChevronLeft,
   Volume2,
+  ArrowRight,
+  Download,
+  Globe,
+  X,
 } from 'lucide-react';
 import { Header } from '../../components/common/Header';
 import { Footer } from '../../components/common/Footer';
@@ -58,7 +61,7 @@ const FALLBACK_ARTIFACTS: Record<string, any> = {
       title: 'Audio Guide: The Rhythm of Water Clock Mechanics',
       duration: 145,
       transcript:
-        'Welcome to Exhibit 14. Before mechanical pendulum clocks existed, ancient astronomers looked to steady liquid flow to divide day and night into sixty equal ghatis...',
+        'Welcome to Exhibit 14. Before mechanical pendulum clocks existed, ancient astronomers looked to steady liquid flow to divide day and night into sixty equal intervals called ghatis. Notice the microscopic precision orifice at the base of this calibrated copper basin...',
     },
     video: {
       url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
@@ -347,15 +350,14 @@ export const ArtifactPage: React.FC = () => {
   const [artifact, setArtifact] = useState<Artifact | null>(null);
   const [relatedArtifacts, setRelatedArtifacts] = useState<Artifact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isUnpublished, setIsUnpublished] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showAppPrompt, setShowAppPrompt] = useState(true);
 
   useEffect(() => {
     const fetchArtifact = async () => {
       try {
         setLoading(true);
-        setIsUnpublished(false);
         const res = await api.get(`/public/artifact/${artifactId}`);
 
         if (res.success && res.data && res.data.artifact) {
@@ -377,6 +379,15 @@ export const ArtifactPage: React.FC = () => {
         FALLBACK_ARTIFACTS[artifactId || ''] || FALLBACK_ARTIFACTS['art_8f29d2'];
       if (match) {
         setArtifact(match as Artifact);
+        // Find other artifacts from the same museum as related
+        const related = Object.values(FALLBACK_ARTIFACTS)
+          .filter(
+            (a: any) =>
+              a.shortCode !== match.shortCode &&
+              a.museumId?.slug === match.museumId?.slug
+          )
+          .slice(0, 3);
+        setRelatedArtifacts(related as Artifact[]);
       }
     };
 
@@ -433,31 +444,9 @@ export const ArtifactPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBFCFD] text-[#172033]">
-      {!isNative ? (
-        <Header museumTitle={museum?.name} museumSlug={museum?.slug} />
-      ) : (
-        /* Mobile App Back Bar */
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between shadow-xs">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center space-x-1.5 text-xs font-bold text-[#214E86] p-1 rounded-xl active:bg-[#EAF2FA]"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span>Back</span>
-          </button>
-          <span className="font-serif font-bold text-sm text-[#172033] truncate max-w-[200px]">
-            {artifact.name}
-          </span>
-          <button
-            onClick={handleCopyLink}
-            className="p-2 rounded-xl text-[#64748B] hover:text-[#214E86] active:scale-95"
-          >
-            <Share2 className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      {!isNative && <Header museumTitle={museum?.name} museumSlug={museum?.slug} />}
 
-      <main className="flex-1 w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-10 space-y-8">
+      <main className="flex-1 w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 py-4 sm:py-8 space-y-6 sm:space-y-8">
         {/* Navigation Breadcrumb (Desktop) */}
         {!isNative && (
           <div className="flex items-center space-x-2 text-xs sm:text-sm text-[#64748B] overflow-x-auto pb-1">
@@ -479,7 +468,7 @@ export const ArtifactPage: React.FC = () => {
             {section && (
               <>
                 <Link
-                  to={`/museum/${museum?.slug || museum?._id}/section/${section._id}`}
+                  to={`/museum/${museum?.slug || museum?._id}?gallery=${section._id}`}
                   className="hover:text-[#214E86] font-medium shrink-0"
                 >
                   {section.name}
@@ -491,12 +480,65 @@ export const ArtifactPage: React.FC = () => {
           </div>
         )}
 
-        {/* Hero Gallery */}
-        <ImageGallery images={artifact.images} artifactName={artifact.name} />
+        {/* Google Lens / Mobile Web QR Scan Gateway Banner */}
+        {showAppPrompt && !isNative && (
+          <div className="max-w-4xl mx-auto w-full bg-[#17365F] text-white p-5 rounded-3xl shadow-xl border border-slate-700 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+                  <Landmark className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 block">
+                    Official Museum Digital Guide
+                  </span>
+                  <h3 className="font-bold text-sm sm:text-base text-white">
+                    Exhibit: {artifact.name}
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAppPrompt(false)}
+                className="p-1 rounded-lg text-slate-300 hover:text-white"
+                aria-label="Dismiss banner"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-200 leading-relaxed font-normal">
+              You scanned a physical museum placard! For the best in-gallery companion experience with voice narration tours and interactive features, download the official Android App or continue with the web guide.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+              <a
+                href="/downloads/gmu-museum-guide.apk"
+                download="gmu-museum-guide.apk"
+                className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-md active:scale-95 transition-all text-center"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download Android App (APK)</span>
+              </a>
+
+              <button
+                onClick={() => setShowAppPrompt(false)}
+                className="py-3 px-4 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs sm:text-sm flex items-center justify-center space-x-1.5 transition-colors text-center"
+              >
+                <Globe className="w-4 h-4" />
+                <span>Continue with Web Guide</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Clean Hero Image Gallery */}
+        <div className="max-w-4xl mx-auto w-full">
+          <ImageGallery images={artifact.images || []} artifactName={artifact.name} />
+        </div>
 
         {/* Title, Metadata & Action Badges */}
-        <div className="space-y-4 pt-2">
-          {/* Location & Period Badges */}
+        <div className="max-w-4xl mx-auto w-full space-y-4">
+          {/* Location, Period & Origin Badges */}
           <div className="flex flex-wrap items-center gap-2">
             {artifact.locationInsideMuseum && (
               <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#214E86] text-white text-xs font-semibold shadow-xs">
@@ -520,14 +562,14 @@ export const ArtifactPage: React.FC = () => {
             )}
           </div>
 
-          {/* Main Exhibit Title */}
+          {/* Main Exhibit Title & Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h1 className="text-2xl sm:text-4xl font-serif font-extrabold text-[#172033] tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-extrabold text-[#172033] tracking-tight leading-tight">
               {artifact.name}
             </h1>
 
             {/* Quick Share & QR Card Buttons */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 shrink-0">
               <button
                 onClick={handleCopyLink}
                 className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-white border border-[#CBD5E1] text-[#172033] hover:bg-[#EAF2FA] text-xs font-semibold shadow-xs transition-colors"
@@ -556,68 +598,121 @@ export const ArtifactPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 1. Official Audio Narration Guide */}
-        {artifact.audioNarration?.url && (
-          <AudioPlayer
-            audio={artifact.audioNarration}
-            artifactName={artifact.name}
-          />
-        )}
-
-        {/* 2. Exhibit Overview */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#CBD5E1] shadow-sm space-y-4">
-          <h2 className="text-xl font-serif font-bold text-[#214E86]">
-            Exhibit Overview
-          </h2>
-          <p className="text-sm sm:text-base text-[#172033]/90 leading-relaxed font-normal">
-            {artifact.shortDescription}
-          </p>
-          {artifact.fullDescription && (
-            <p className="text-sm sm:text-base text-[#172033]/80 leading-relaxed font-normal pt-2 border-t border-[#E2E8F0]">
-              {artifact.fullDescription}
-            </p>
+        {/* Main Content Body */}
+        <div className="max-w-4xl mx-auto w-full space-y-6">
+          {/* 1. Official Audio Narration Guide */}
+          {artifact.audioNarration?.url && (
+            <AudioPlayer
+              audio={artifact.audioNarration}
+              artifactName={artifact.name}
+            />
           )}
-        </div>
 
-        {/* 3. Video Documentary */}
-        {artifact.video?.url && (
-          <VideoPlayer video={artifact.video} />
-        )}
-
-        {/* 4. Structured Rich Content Blocks */}
-        {artifact.richContent && artifact.richContent.length > 0 && (
-          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#CBD5E1] shadow-sm">
-            <RichContentRenderer blocks={artifact.richContent} />
-          </div>
-        )}
-
-        {/* 5. Historical Context & Background */}
-        {artifact.historicalInformation && (
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#EAF2FA] border border-[#CBD5E1] shadow-sm space-y-3">
-            <h2 className="text-lg sm:text-xl font-serif font-bold text-[#214E86] flex items-center space-x-2">
-              <Info className="w-5 h-5" />
-              <span>Historical Significance</span>
+          {/* 2. Exhibit Overview */}
+          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#CBD5E1] shadow-sm space-y-3">
+            <h2 className="text-xl font-serif font-bold text-[#214E86]">
+              Exhibit Overview
             </h2>
             <p className="text-sm sm:text-base text-[#172033]/90 leading-relaxed font-normal">
-              {artifact.historicalInformation}
+              {artifact.shortDescription}
             </p>
+            {artifact.fullDescription && (
+              <p className="text-sm sm:text-base text-[#172033]/80 leading-relaxed font-normal pt-3 border-t border-[#E2E8F0]">
+                {artifact.fullDescription}
+              </p>
+            )}
           </div>
-        )}
 
-        {/* 6. Tags */}
-        {artifact.tags && artifact.tags.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <Tag className="w-4 h-4 text-[#64748B]" />
-            {artifact.tags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="px-3 py-1 rounded-full bg-white border border-[#CBD5E1] text-xs font-semibold text-[#64748B]"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
+          {/* 3. Video Documentary */}
+          {artifact.video?.url && (
+            <VideoPlayer video={artifact.video} />
+          )}
+
+          {/* 4. Structured Rich Content Blocks */}
+          {artifact.richContent && artifact.richContent.length > 0 && (
+            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#CBD5E1] shadow-sm">
+              <RichContentRenderer blocks={artifact.richContent} />
+            </div>
+          )}
+
+          {/* 5. Historical Context & Background */}
+          {artifact.historicalInformation && (
+            <div className="p-6 sm:p-8 rounded-3xl bg-[#EAF2FA] border border-[#CBD5E1] shadow-sm space-y-3">
+              <h2 className="text-lg sm:text-xl font-serif font-bold text-[#214E86] flex items-center space-x-2">
+                <Info className="w-5 h-5" />
+                <span>Historical Significance</span>
+              </h2>
+              <p className="text-sm sm:text-base text-[#172033]/90 leading-relaxed font-normal">
+                {artifact.historicalInformation}
+              </p>
+            </div>
+          )}
+
+          {/* 6. Tags */}
+          {artifact.tags && artifact.tags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 pt-2">
+              <Tag className="w-4 h-4 text-[#64748B]" />
+              {artifact.tags.map((tag, idx) => (
+                <span
+                  key={idx}
+                  className="px-3 py-1 rounded-full bg-white border border-[#CBD5E1] text-xs font-semibold text-[#64748B]"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* 7. Related Exhibits in Same Collection */}
+          {relatedArtifacts.length > 0 && (
+            <div className="pt-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif font-bold text-lg text-[#172033]">
+                  More Exhibits in this Museum
+                </h3>
+                {museum && (
+                  <Link
+                    to={`/museum/${museum.slug || museum._id}`}
+                    className="text-xs font-bold text-[#214E86] hover:underline flex items-center space-x-1"
+                  >
+                    <span>View Museum Hub</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {relatedArtifacts.map((rel) => (
+                  <Link
+                    key={rel.shortCode || rel._id}
+                    to={`/a/${rel.shortCode}`}
+                    className="p-3.5 rounded-2xl bg-white border border-[#CBD5E1] shadow-xs hover:shadow-md transition-all flex items-center space-x-3 group"
+                  >
+                    <img
+                      src={
+                        rel.images?.[0]?.url ||
+                        'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=200&q=80'
+                      }
+                      alt={rel.name}
+                      className="w-16 h-16 rounded-xl object-cover shrink-0 group-hover:scale-105 transition-transform"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-serif font-bold text-xs text-[#172033] group-hover:text-[#214E86] transition-colors truncate">
+                        {rel.name}
+                      </h4>
+                      <p className="text-[11px] text-[#64748B] line-clamp-1 mt-0.5">
+                        {rel.shortDescription}
+                      </p>
+                      <span className="text-[10px] text-[#214E86] font-bold mt-1 block">
+                        Explore →
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </main>
 
       {!isNative && <Footer />}

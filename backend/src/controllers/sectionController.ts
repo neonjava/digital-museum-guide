@@ -1,22 +1,42 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Section } from '../models/Section';
+import { Museum } from '../models/Museum';
 import { Artifact } from '../models/Artifact';
 import { AuthRequest } from '../middleware/auth';
 
 export const getSectionsByMuseum = async (req: Request, res: Response): Promise<void> => {
   try {
     const { museumId } = req.params;
-    const sections = await Section.find({ museumId, isActive: true }).sort({ displayOrder: 1, createdAt: 1 });
+    let validMuseumId: any = museumId;
+
+    if (!mongoose.Types.ObjectId.isValid(museumId)) {
+      const museum = await Museum.findOne({ slug: museumId.toLowerCase() });
+      if (museum) {
+        validMuseumId = museum._id;
+      }
+    }
+
+    const sections = await Section.find({ museumId: validMuseumId, isActive: true })
+      .sort({ displayOrder: 1, createdAt: 1 })
+      .lean();
 
     // Attach artifact counts for each section
     const sectionsWithCounts = await Promise.all(
       sections.map(async (sec) => {
         const artifactCount = await Artifact.countDocuments({ sectionId: sec._id });
         const publishedCount = await Artifact.countDocuments({ sectionId: sec._id, status: 'PUBLISHED' });
+        const artifacts = await Artifact.find({ sectionId: sec._id, status: 'PUBLISHED' })
+          .populate('qrCodeId')
+          .sort({ displayOrder: 1, createdAt: 1 })
+          .select('name shortCode shortDescription images audioNarration video locationInsideMuseum datePeriod tags qrCodeId')
+          .lean();
+
         return {
-          ...sec.toObject(),
+          ...sec,
           artifactCount,
           publishedCount,
+          artifacts,
         };
       })
     );
@@ -30,12 +50,24 @@ export const getSectionsByMuseum = async (req: Request, res: Response): Promise<
 export const getSectionById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const section = await Section.findById(id).populate('museumId', 'name slug');
+    const section = await Section.findById(id).populate('museumId', 'name slug logo coverImage');
     if (!section) {
       res.status(404).json({ success: false, message: 'Section not found' });
       return;
     }
-    res.json({ success: true, data: section });
+
+    const artifacts = await Artifact.find({ sectionId: id, status: 'PUBLISHED' })
+      .populate('qrCodeId')
+      .sort({ displayOrder: 1, createdAt: 1 });
+
+    res.json({
+      success: true,
+      data: {
+        ...section.toObject(),
+        artifacts,
+        artifactCount: artifacts.length,
+      },
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

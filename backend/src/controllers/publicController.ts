@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Museum } from '../models/Museum';
 import { Section } from '../models/Section';
 import { Artifact } from '../models/Artifact';
-import mongoose from 'mongoose';
 
 export const getPublicMuseum = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -13,24 +13,31 @@ export const getPublicMuseum = async (req: Request, res: Response): Promise<void
       query = { $or: [{ _id: identifier }, { slug: identifier.toLowerCase() }] };
     }
 
-    const museum = await Museum.findOne({ ...query, isActive: true });
+    const museum = await Museum.findOne({ ...query, isActive: true }).lean();
     if (!museum) {
       res.status(404).json({ success: false, message: 'Museum not found or inactive' });
       return;
     }
 
     const sections = await Section.find({ museumId: museum._id, isActive: true })
-      .sort({ displayOrder: 1, createdAt: 1 });
+      .sort({ displayOrder: 1, createdAt: 1 })
+      .lean();
 
-    const sectionsWithStats = await Promise.all(
+    const sectionsWithArtifacts = await Promise.all(
       sections.map(async (sec) => {
-        const publishedCount = await Artifact.countDocuments({
+        const artifacts = await Artifact.find({
           sectionId: sec._id,
           status: 'PUBLISHED',
-        });
+        })
+          .populate('qrCodeId')
+          .sort({ displayOrder: 1, createdAt: 1 })
+          .select('name shortCode shortDescription images audioNarration video locationInsideMuseum datePeriod tags qrCodeId')
+          .lean();
+
         return {
-          ...sec.toObject(),
-          artifactCount: publishedCount,
+          ...sec,
+          artifacts,
+          artifactCount: artifacts.length,
         };
       })
     );
@@ -40,11 +47,21 @@ export const getPublicMuseum = async (req: Request, res: Response): Promise<void
       status: 'PUBLISHED',
     });
 
+    const allArtifacts = await Artifact.find({
+      museumId: museum._id,
+      status: 'PUBLISHED',
+    })
+      .populate('qrCodeId')
+      .populate('sectionId', 'name description coverImage')
+      .sort({ displayOrder: 1, createdAt: 1 })
+      .lean();
+
     res.json({
       success: true,
       data: {
         museum,
-        sections: sectionsWithStats,
+        sections: sectionsWithArtifacts,
+        artifacts: allArtifacts,
         stats: {
           totalSections: sections.length,
           totalArtifacts: totalPublishedArtifacts,
@@ -59,7 +76,7 @@ export const getPublicMuseum = async (req: Request, res: Response): Promise<void
 export const getPublicSectionArtifacts = async (req: Request, res: Response): Promise<void> => {
   try {
     const { sectionId } = req.params;
-    const section = await Section.findById(sectionId).populate('museumId', 'name slug logo');
+    const section = await Section.findById(sectionId).populate('museumId', 'name slug logo coverImage description');
     if (!section) {
       res.status(404).json({ success: false, message: 'Section not found' });
       return;
@@ -69,8 +86,9 @@ export const getPublicSectionArtifacts = async (req: Request, res: Response): Pr
       sectionId,
       status: 'PUBLISHED',
     })
+      .populate('qrCodeId')
       .sort({ displayOrder: 1, createdAt: 1 })
-      .select('name shortCode shortDescription images audioNarration video locationInsideMuseum datePeriod tags');
+      .select('name shortCode shortDescription fullDescription richContent historicalInformation images audioNarration video locationInsideMuseum datePeriod creatorOrigin tags qrCodeId');
 
     res.json({
       success: true,
@@ -88,14 +106,16 @@ export const getPublicArtifact = async (req: Request, res: Response): Promise<vo
   try {
     const { identifier } = req.params;
 
-    let query: any = { shortCode: identifier };
+    const shortCodeRegex = new RegExp(`^${identifier}$`, 'i');
+    let query: any = { shortCode: shortCodeRegex };
     if (mongoose.Types.ObjectId.isValid(identifier)) {
-      query = { $or: [{ _id: identifier }, { shortCode: identifier }] };
+      query = { $or: [{ _id: identifier }, { shortCode: shortCodeRegex }] };
     }
 
     const artifact = await Artifact.findOne(query)
-      .populate('museumId', 'name slug logo address contact openingHours website')
-      .populate('sectionId', 'name description coverImage');
+      .populate('museumId', 'name slug logo coverImage description address contact openingHours website')
+      .populate('sectionId', 'name description coverImage')
+      .populate('qrCodeId');
 
     if (!artifact) {
       res.status(404).json({
@@ -119,19 +139,35 @@ export const getPublicArtifact = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Get related artifacts in the same section for easy exploration
-    const relatedArtifacts = await Artifact.find({
-      sectionId: artifact.sectionId,
+    const sectionId = (artifact.sectionId as any)?._id || artifact.sectionId;
+    const museumId = (artifact.museumId as any)?._id || artifact.museumId;
+
+    // Get related artifacts in the same section for exploration
+    let relatedArtifacts = await Artifact.find({
+      sectionId,
       _id: { $ne: artifact._id },
       status: 'PUBLISHED',
     })
-      .limit(4)
-      .select('name shortCode shortDescription images locationInsideMuseum');
+      .limit(6)
+      .select('name shortCode shortDescription images locationInsideMuseum datePeriod tags audioNarration video');
+
+    // If no related artifacts in section, get from the same museum
+    if (relatedArtifacts.length === 0) {
+      relatedArtifacts = await Artifact.find({
+        museumId,
+        _id: { $ne: artifact._id },
+        status: 'PUBLISHED',
+      })
+        .limit(6)
+        .select('name shortCode shortDescription images locationInsideMuseum datePeriod tags audioNarration video');
+    }
 
     res.json({
       success: true,
       data: {
         artifact,
+        museum: artifact.museumId,
+        section: artifact.sectionId,
         relatedArtifacts,
       },
     });
@@ -145,7 +181,7 @@ export const searchPublicArtifacts = async (req: Request, res: Response): Promis
     const { q, museumId, sectionId } = req.query;
 
     if (!q || String(q).trim() === '') {
-      res.json({ success: true, data: [] });
+      res.json({ success: true, count: 0, data: [] });
       return;
     }
 
@@ -162,14 +198,27 @@ export const searchPublicArtifacts = async (req: Request, res: Response): Promis
       ],
     };
 
-    if (museumId) query.museumId = museumId;
-    if (sectionId) query.sectionId = sectionId;
+    if (museumId) {
+      if (mongoose.Types.ObjectId.isValid(String(museumId))) {
+        query.museumId = museumId;
+      } else {
+        const museum = await Museum.findOne({ slug: String(museumId).toLowerCase() });
+        if (museum) {
+          query.museumId = museum._id;
+        }
+      }
+    }
+
+    if (sectionId && mongoose.Types.ObjectId.isValid(String(sectionId))) {
+      query.sectionId = sectionId;
+    }
 
     const artifacts = await Artifact.find(query)
-      .populate('museumId', 'name slug')
+      .populate('museumId', 'name slug logo')
       .populate('sectionId', 'name')
-      .limit(20)
-      .select('name shortCode shortDescription images museumId sectionId locationInsideMuseum datePeriod');
+      .populate('qrCodeId')
+      .limit(30)
+      .select('name shortCode shortDescription images audioNarration video museumId sectionId locationInsideMuseum datePeriod tags qrCodeId');
 
     res.json({ success: true, count: artifacts.length, data: artifacts });
   } catch (error: any) {
