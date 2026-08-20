@@ -143,7 +143,12 @@ export const SectionPage: React.FC = () => {
                       alt={artifact.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
+                    <div
+                      style={{
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)',
+                      }}
+                      className="absolute inset-0"
+                    />
 
                     {/* Media Badges */}
                     <div className="absolute top-3 right-3 flex items-center space-x-1.5">

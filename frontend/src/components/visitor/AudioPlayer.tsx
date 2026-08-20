@@ -123,7 +123,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   if (!audio.url) return null;
 
   return (
-    <div className="rounded-2xl bg-linear-to-br from-museum-light/80 to-white border border-museum-border shadow-card p-5 my-6">
+    <div className="rounded-2xl bg-[#EAF2FA] border border-[#CBD5E1] shadow-md p-5 my-6">
       <audio ref={audioRef} src={audio.url} preload="metadata" />
 
       {/* Header bar */}

@@ -326,7 +326,7 @@ export const ArtifactPage: React.FC = () => {
 
         {/* 5. Historical Context & Background */}
         {artifact.historicalInformation && (
-          <div className="p-6 sm:p-8 rounded-3xl bg-linear-to-br from-museum-light/60 to-white border border-museum-border shadow-card space-y-3">
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#EAF2FA] border border-[#CBD5E1] shadow-card space-y-3">
             <h2 className="text-lg sm:text-xl font-serif font-bold text-museum-primary flex items-center space-x-2">
               <Info className="w-5 h-5" />
               <span>Historical Significance</span>

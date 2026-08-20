@@ -103,7 +103,12 @@ export const MuseumPage: React.FC = () => {
               alt={museum.name}
               className="w-full h-full object-cover opacity-60"
             />
-            <div className="absolute inset-0 bg-linear-to-t from-museum-dark via-museum-dark/40 to-transparent" />
+            <div
+              style={{
+                background: 'linear-gradient(to top, rgba(23, 54, 95, 0.95) 0%, rgba(23, 54, 95, 0.4) 60%, transparent 100%)',
+              }}
+              className="absolute inset-0"
+            />
 
             <div className="absolute bottom-6 left-6 right-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
               <div className="space-y-2 max-w-2xl">
@@ -148,7 +153,7 @@ export const MuseumPage: React.FC = () => {
           </div>
 
           {/* Practical Info Card */}
-          <div className="p-6 rounded-3xl bg-linear-to-br from-museum-light/60 to-white border border-museum-border shadow-card space-y-4 text-xs sm:text-sm">
+          <div className="p-6 rounded-3xl bg-[#EAF2FA] border border-[#CBD5E1] shadow-card space-y-4 text-xs sm:text-sm">
             <h3 className="font-serif font-bold text-base text-museum-primary flex items-center space-x-2">
               <Clock className="w-4 h-4" />
               <span>Visitor Information</span>

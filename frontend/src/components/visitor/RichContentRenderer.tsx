@@ -67,7 +67,7 @@ export const RichContentRenderer: React.FC<RichContentRendererProps> = ({ blocks
             return (
               <div
                 key={block.id}
-                className="relative my-4 p-5 rounded-2xl bg-linear-to-r from-museum-light/70 to-museum-bg border-l-4 border-museum-primary text-museum-dark font-serif italic text-base sm:text-lg leading-relaxed shadow-xs"
+                className="relative my-4 p-5 rounded-2xl bg-[#EAF2FA] border border-[#CBD5E1] border-l-4 border-l-[#214E86] text-[#172033] font-serif italic text-base sm:text-lg leading-relaxed shadow-xs"
               >
                 <Quote className="w-8 h-8 text-museum-primary/20 absolute -top-2 right-4 pointer-events-none" />
                 <p>{block.content}</p>

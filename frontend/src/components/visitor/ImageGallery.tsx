@@ -46,7 +46,10 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images, artifactName
           loading="eager"
         />
 
-        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+        <div
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)' }}
+          className="absolute inset-0 pointer-events-none"
+        />
 
         {/* Fullscreen Expand Badge */}
         <button
