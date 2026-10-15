@@ -18,7 +18,7 @@
     "audio-guide"
   ],
   "author": "Digital Museum Guide Platform",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.3",

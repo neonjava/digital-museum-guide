@@ -27,7 +27,7 @@
     "android"
   ],
   "author": "Digital Museum Guide Platform",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
