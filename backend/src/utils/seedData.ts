@@ -89,20 +89,20 @@ export const SEED_USERS: SeedUser[] = [
   {
     name: 'Super Administrator',
     email: 'admin@museum.org',
-    password: 'REDACTED_SEED_PASSWORD',
+    password: process.env.SEED_ADMIN_PASSWORD || '',
     role: 'SUPER_ADMIN',
   },
   {
     name: 'Dr. Ananya Sharma',
     email: 'curator@gmu.edu.in',
-    password: 'REDACTED_SEED_PASSWORD',
+    password: process.env.SEED_CURATOR_PASSWORD || '',
     role: 'MUSEUM_ADMIN',
     museumSlug: 'gmu-heritage-museum',
   },
   {
     name: 'Rajesh Nair',
     email: 'curator@nationalmuseumdelhi.gov.in',
-    password: 'REDACTED_SEED_PASSWORD',
+    password: process.env.SEED_CURATOR_PASSWORD || '',
     role: 'MUSEUM_ADMIN',
     museumSlug: 'national-museum-new-delhi',
   },

@@ -56,7 +56,7 @@ export const seedDatabase = async () => {
     }
 
     console.log('👤 Seeding User Accounts...');
-    for (const uData of SEED_USERS) {
+    for (const uData of SEED_USERS.filter(user => user.password)) {
       const userDoc: any = {
         name: uData.name,
         email: uData.email,
@@ -143,8 +143,7 @@ export const seedDatabase = async () => {
 
     console.log('✅ Database Seed completed successfully!');
     console.log('================================================');
-    console.log('👑 Super Admin: admin@museum.org / REDACTED_SEED_PASSWORD');
-    console.log('🏛️ GMU Admin: curator@gmu.edu.in / REDACTED_SEED_PASSWORD');
+    console.log('Seeded admin accounts only when SEED_ADMIN_PASSWORD or SEED_CURATOR_PASSWORD was configured.');
     console.log(`🏛️ Total Museums Seeded: ${SEED_MUSEUMS.length}`);
     console.log(`🏺 Total Artifacts Seeded: ${SEED_ARTIFACTS.length}`);
     console.log('================================================');
