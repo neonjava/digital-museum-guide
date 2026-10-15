@@ -7,12 +7,6 @@
   VITE_API_URL = "/api"
 
 [[redirects]]
-  from = "/api/*"
-  to = "http://api.example.invalid:5050/api/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

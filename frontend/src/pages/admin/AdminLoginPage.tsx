@@ -31,16 +31,6 @@ export const AdminLoginPage: React.FC = () => {
     }
   };
 
-  const handleQuickDemoAdmin = () => {
-    setEmail('curator@gmu.edu.in');
-    setPassword('REDACTED_SEED_PASSWORD');
-  };
-
-  const handleQuickSuperAdmin = () => {
-    setEmail('admin@museum.org');
-    setPassword('REDACTED_SEED_PASSWORD');
-  };
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-museum-bg p-4">
       <div className="w-full max-w-md bg-white border border-museum-border rounded-3xl p-8 shadow-elevated space-y-6">
@@ -108,29 +98,6 @@ export const AdminLoginPage: React.FC = () => {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Quick Demo Logins for Pair Programming / Evaluation */}
-        <div className="pt-4 border-t border-museum-border/60 space-y-2">
-          <span className="text-[11px] font-semibold text-museum-muted block text-center uppercase tracking-wider">
-            Quick Demo Fill:
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={handleQuickDemoAdmin}
-              className="py-1.5 px-2 rounded-lg bg-museum-light/60 border border-museum-border text-[11px] font-medium text-museum-primary hover:bg-museum-light"
-            >
-              GMU Curator
-            </button>
-            <button
-              type="button"
-              onClick={handleQuickSuperAdmin}
-              className="py-1.5 px-2 rounded-lg bg-museum-light/60 border border-museum-border text-[11px] font-medium text-museum-primary hover:bg-museum-light"
-            >
-              Super Admin
-            </button>
-          </div>
-        </div>
 
         <div className="text-center pt-2">
           <Link

@@ -8,13 +8,6 @@
 
 # Reverse proxy all /api calls directly to 24/7 dedicated VPS backend
 [[redirects]]
-  from = "/api/*"
-  to = "http://api.example.invalid:5050/api/:splat"
-  status = 200
-  force = true
-
-# SPA client side routing
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

@@ -1,8 +1,4 @@
-import { isNativeApp } from '../utils/platform';
-
-const API_BASE_URL = isNativeApp()
-  ? 'http://api.example.invalid:5050/api'
-  : (import.meta.env.VITE_API_URL || '/api');
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 interface RequestOptions extends RequestInit {
   data?: any;
@@ -47,63 +43,6 @@ class ApiService {
       try {
         result = JSON.parse(text);
       } catch (parseError) {
-        // If the server returned an HTML page (e.g. Netlify SPA rewrite or 404 handler)
-        if (endpoint === '/auth/login' && data) {
-          if (data.email === 'curator@gmu.edu.in' && data.password === 'REDACTED_SEED_PASSWORD') {
-            return {
-              success: true,
-              token: 'jwt_curator_session_' + Date.now(),
-              user: {
-                id: '6a86d028329862c4093699ed',
-                name: 'Dr. Ananya Sharma',
-                email: 'curator@gmu.edu.in',
-                role: 'MUSEUM_ADMIN',
-                museumId: {
-                  _id: '6a86d028329862c4093699eb',
-                  name: 'GM University Heritage Museum',
-                  slug: 'gmu-heritage-museum',
-                },
-              },
-            } as any;
-          } else if (data.email === 'admin@museum.org' && data.password === 'REDACTED_SEED_PASSWORD') {
-            return {
-              success: true,
-              token: 'jwt_admin_session_' + Date.now(),
-              user: {
-                id: '6a86d028329862c4093699e9',
-                name: 'Super Administrator',
-                email: 'admin@museum.org',
-                role: 'SUPER_ADMIN',
-              },
-            } as any;
-          } else {
-            throw new Error('Invalid email or password');
-          }
-        }
-
-        if (endpoint === '/auth/me') {
-          const storedToken = localStorage.getItem('museum_token');
-          if (storedToken && storedToken.startsWith('jwt_')) {
-            const isCurator = storedToken.includes('curator');
-            return {
-              success: true,
-              user: {
-                id: isCurator ? '6a86d028329862c4093699ed' : '6a86d028329862c4093699e9',
-                name: isCurator ? 'Dr. Ananya Sharma' : 'Super Administrator',
-                email: isCurator ? 'curator@gmu.edu.in' : 'admin@museum.org',
-                role: isCurator ? 'MUSEUM_ADMIN' : 'SUPER_ADMIN',
-                museumId: isCurator
-                  ? {
-                      _id: '6a86d028329862c4093699eb',
-                      name: 'GM University Heritage Museum',
-                      slug: 'gmu-heritage-museum',
-                    }
-                  : undefined,
-              },
-            } as any;
-          }
-        }
-
         throw new Error(
           `Server returned non-JSON response (${response.status}). Please check your backend connection.`
         );
