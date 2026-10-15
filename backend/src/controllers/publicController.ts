@@ -143,7 +143,7 @@ export const getPublicArtifact = async (req: Request, res: Response): Promise<vo
     const museumId = (artifact.museumId as any)?._id || artifact.museumId;
 
     // Get related artifacts in the same section for exploration
-    let relatedArtifacts = await Artifact.find({
+    const sectionArtifacts = await Artifact.find({
       sectionId,
       _id: { $ne: artifact._id },
       status: 'PUBLISHED',
@@ -152,15 +152,15 @@ export const getPublicArtifact = async (req: Request, res: Response): Promise<vo
       .select('name shortCode shortDescription images locationInsideMuseum datePeriod tags audioNarration video');
 
     // If no related artifacts in section, get from the same museum
-    if (relatedArtifacts.length === 0) {
-      relatedArtifacts = await Artifact.find({
+    const relatedArtifacts = sectionArtifacts.length === 0
+      ? await Artifact.find({
         museumId,
         _id: { $ne: artifact._id },
         status: 'PUBLISHED',
       })
         .limit(6)
-        .select('name shortCode shortDescription images locationInsideMuseum datePeriod tags audioNarration video');
-    }
+        .select('name shortCode shortDescription images locationInsideMuseum datePeriod tags audioNarration video')
+      : sectionArtifacts;
 
     res.json({
       success: true,
